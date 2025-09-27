@@ -1,14 +1,21 @@
 package com.craftmaster2190.halloween.dragoncontrol;
 
+import com.fasterxml.jackson.annotation.*;
 import jakarta.annotation.Nullable;
 import java.time.*;
 import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicReference;
 import lombok.Synchronized;
 
+import static com.fasterxml.jackson.annotation.JsonAutoDetect.Visibility.NONE;
+
+@JsonAutoDetect(fieldVisibility = NONE, getterVisibility = NONE) // Disable auto-detection of fields
 public class ActuatorState {
   private static final Duration STEP = Duration.ofMillis(100);
+
+  @JsonProperty
   private final String name;
+  @JsonProperty
   private final Duration max;
   private final Runnable doOnOpenPositive;
   private final Runnable doOnOpenNegative;
@@ -16,9 +23,13 @@ public class ActuatorState {
   private final AtomicReference<Duration> targetPositiveElapsed = new AtomicReference<>(Duration.ZERO);
   private final AtomicReference<ScheduledFuture<?>> thread = new AtomicReference<>(); // TODO Move to watchdog thread
   private final ScheduledExecutorService executorService;
+
+  @JsonProperty
   private State state = State.STOPPED;
   @Nullable
   private Instant lastUpdate;
+
+  @JsonProperty
   private Duration currentPositiveElapsed = Duration.ZERO;
 
   public ActuatorState(String name, Duration max, Runnable doOnOpenPositive, Runnable doOnOpenNegative, Runnable doOnStop) {
@@ -57,9 +68,15 @@ public class ActuatorState {
     };
 
     return "ActuatorState(" + name + ", " + state +
-        ", current=" + currentPositiveElapsed +
+        ", current=" + DurationUtils.formatDuration(currentPositiveElapsed) + "/" + DurationUtils.formatDuration(max) +
+        " (" + getPercent() + ")" +
         stateString +
         ")";
+  }
+
+  @JsonProperty
+  public Percent getPercent() {
+    return new Percent(currentPositiveElapsed.toMillis(), max.toMillis());
   }
 
   @Synchronized
@@ -127,6 +144,9 @@ public class ActuatorState {
   }
 
   public void requestMoveTo(Duration target) {
+    Duration min = Duration.ZERO;
+    Duration max1 = max;
+    target = DurationUtils.clampDuration(target, min, max1);
     targetPositiveElapsed.set(target);
     initStepThreadIfNotAlreadyStarted();
   }
@@ -143,7 +163,7 @@ public class ActuatorState {
     if (percentage < 0.0 || percentage > 1.0) {
       throw new IllegalArgumentException("Percentage must be between 0.0 and 1.0");
     }
-    requestMoveTo(Duration.ofMillis(((long)(max.toMillis() * percentage))));
+    requestMoveTo(Duration.ofMillis(((long) (max.toMillis() * percentage))));
   }
 
   private enum State {

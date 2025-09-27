@@ -1,8 +1,10 @@
 package com.craftmaster2190.halloween.dragoncontrol;
 
 import java.time.Duration;
+import lombok.Data;
 import org.springframework.stereotype.Component;
 
+@Data
 @Component
 public class DragonLongNeck {
 
