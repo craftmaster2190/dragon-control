@@ -4,15 +4,17 @@ import jakarta.annotation.Nullable;
 import java.time.*;
 import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicReference;
+import lombok.Synchronized;
 
 public class ActuatorState {
   private static final Duration STEP = Duration.ofMillis(100);
+  private final String name;
   private final Duration max;
   private final Runnable doOnOpenPositive;
   private final Runnable doOnOpenNegative;
   private final Runnable doOnStop;
   private final AtomicReference<Duration> targetPositiveElapsed = new AtomicReference<>(Duration.ZERO);
-  private final AtomicReference<ScheduledFuture<?>> thread = new AtomicReference<>(null);
+  private final AtomicReference<ScheduledFuture<?>> thread = new AtomicReference<>(); // TODO Move to watchdog thread
   private final ScheduledExecutorService executorService;
   private State state = State.STOPPED;
   @Nullable
@@ -20,18 +22,48 @@ public class ActuatorState {
   private Duration currentPositiveElapsed = Duration.ZERO;
 
   public ActuatorState(String name, Duration max, Runnable doOnOpenPositive, Runnable doOnOpenNegative, Runnable doOnStop) {
+    this.name = name;
     this.max = max;
     this.doOnOpenPositive = doOnOpenPositive;
     this.doOnOpenNegative = doOnOpenNegative;
     this.doOnStop = doOnStop;
     executorService = Executors.newSingleThreadScheduledExecutor(runnable -> {
-      Thread thread = new Thread(runnable, "ActuatorState-" + name);
-      thread.setDaemon(true);
-      return thread;
+      Thread newThread = new Thread(runnable, "ActuatorState-" + name);
+      newThread.setDaemon(true);
+      return newThread;
     });
   }
 
-  private void initThread() {
+  public ActuatorState(String name, Duration max, PinController pinController, Pin openPositivePin, Pin openNegativePin) {
+    this(name, max, () -> {
+          pinController.closePin(openNegativePin);
+          pinController.openPin(openPositivePin);
+        },
+        () -> {
+          pinController.closePin(openPositivePin);
+          pinController.openPin(openNegativePin);
+        },
+        () -> {
+          pinController.closePin(openPositivePin);
+          pinController.closePin(openNegativePin);
+        });
+  }
+
+  @Override
+  public String toString() {
+    var stateString = switch (state) {
+      case OPENING_POSITIVE, OPENING_NEGATIVE -> ", target=" + targetPositiveElapsed;
+      default -> "";
+    };
+
+    return "ActuatorState(" + name + ", " + state +
+        ", current=" + currentPositiveElapsed +
+        stateString +
+        ")";
+  }
+
+  @Synchronized
+  private void initStepThreadIfNotAlreadyStarted() {
     ScheduledFuture<?> scheduledFuture1 = thread.get();
     if (scheduledFuture1 != null && !scheduledFuture1.isDone() && !scheduledFuture1.isCancelled()) {
       return;
@@ -41,58 +73,77 @@ public class ActuatorState {
   }
 
   private void doStep() {
-    Duration targetPositiveElapsed$ = targetPositiveElapsed.get();
-    State newState;
-    if (targetPositiveElapsed$.compareTo(currentPositiveElapsed) > 0) {
-      newState = State.OPENING_POSITIVE;
-    }
-    else if (targetPositiveElapsed$.compareTo(currentPositiveElapsed) < 0) {
-      newState = State.OPENING_NEGATIVE;
-    }
-    else {
-      newState = State.STOPPED;
-    }
+    State newState = determineNewState();
 
-    var step$ = lastUpdate == null ? Duration.ZERO : Duration.between(lastUpdate, Instant.now());
+    // The actual step may vary from the 100ms we requested, so calculate the actual time passed
+    var actualStepValue = lastUpdate == null ? Duration.ZERO : Duration.between(lastUpdate, Instant.now());
     lastUpdate = Instant.now();
-    switch (state) {
-      case OPENING_POSITIVE -> {
-        currentPositiveElapsed = currentPositiveElapsed.plus(step$);
-        if (currentPositiveElapsed.compareTo(max) > 0) {
-          currentPositiveElapsed = max;
-          newState = State.STOPPED;
-        }
+
+    // Handle update of current position
+    if (newState == State.OPENING_POSITIVE) {
+      currentPositiveElapsed = currentPositiveElapsed.plus(actualStepValue);
+      if (currentPositiveElapsed.compareTo(max) > 0) {
+        currentPositiveElapsed = max;
+        newState = State.STOPPED;
       }
-      case OPENING_NEGATIVE -> {
-        currentPositiveElapsed = currentPositiveElapsed.minus(step$);
-        if (currentPositiveElapsed.compareTo(Duration.ZERO) < 0) {
-          currentPositiveElapsed = Duration.ZERO;
-          newState = State.STOPPED;
-        }
+    }
+    else if (newState == State.OPENING_NEGATIVE) {
+      currentPositiveElapsed = currentPositiveElapsed.minus(actualStepValue);
+      if (currentPositiveElapsed.compareTo(Duration.ZERO) < 0) {
+        currentPositiveElapsed = Duration.ZERO;
+        newState = State.STOPPED;
       }
     }
 
-    if (newState != state) {
+    // Handle state change
+    if (state != newState) {
       state = newState;
       switch (state) {
-        case OPENING_POSITIVE -> {
-          doOnOpenPositive.run();
-        }
-        case OPENING_NEGATIVE -> {
-          doOnOpenNegative.run();
-        }
+        case OPENING_POSITIVE -> doOnOpenPositive.run();
+        case OPENING_NEGATIVE -> doOnOpenNegative.run();
         case STOPPED -> {
           doOnStop.run();
-          ScheduledFuture<?> thread$ = thread.get();
-          thread$.cancel(false);
+          thread
+              .get()
+              .cancel(false);
         }
       }
     }
   }
 
+  private State determineNewState() {
+    State newState;
+    final Duration targetPositiveElapsedLocal = targetPositiveElapsed.get();
+    if (targetPositiveElapsedLocal.compareTo(currentPositiveElapsed) > 0) {
+      newState = State.OPENING_POSITIVE;
+    }
+    else if (targetPositiveElapsedLocal.compareTo(currentPositiveElapsed) < 0) {
+      newState = State.OPENING_NEGATIVE;
+    }
+    else {
+      newState = State.STOPPED;
+    }
+    return newState;
+  }
+
   public void requestMoveTo(Duration target) {
     targetPositiveElapsed.set(target);
-    initThread();
+    initStepThreadIfNotAlreadyStarted();
+  }
+
+  public void requestMoveToMax() {
+    requestMoveTo(max);
+  }
+
+  public void requestMoveToZero() {
+    requestMoveTo(Duration.ZERO);
+  }
+
+  public void requestMoveToPercentage(double percentage) {
+    if (percentage < 0.0 || percentage > 1.0) {
+      throw new IllegalArgumentException("Percentage must be between 0.0 and 1.0");
+    }
+    requestMoveTo(Duration.ofMillis(((long)(max.toMillis() * percentage))));
   }
 
   private enum State {
