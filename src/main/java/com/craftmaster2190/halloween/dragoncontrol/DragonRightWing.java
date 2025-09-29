@@ -8,10 +8,10 @@ import org.springframework.stereotype.Component;
 @Component
 public class DragonRightWing {
 
-  private final ActuatorState rightWing;
+  private final ActuatorState rightHand;
 
   public DragonRightWing(PinController pinController) {
-    rightWing = new ActuatorState("RightWing",
+    rightHand = new ActuatorState("RightHand",
         Duration.ofSeconds(5),
         pinController,
         Pin.RIGHT_WING_NEGATIVE,

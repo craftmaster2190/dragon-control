@@ -3,15 +3,12 @@ package com.craftmaster2190.halloween.dragoncontrol;
 import com.fasterxml.jackson.annotation.*;
 import jakarta.annotation.Nullable;
 import java.time.*;
-import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicReference;
-import lombok.Synchronized;
 
 import static com.fasterxml.jackson.annotation.JsonAutoDetect.Visibility.NONE;
 
 @JsonAutoDetect(fieldVisibility = NONE, getterVisibility = NONE) // Disable auto-detection of fields
 public class ActuatorState {
-  private static final Duration STEP = Duration.ofMillis(100);
 
   @JsonProperty
   private final String name;
@@ -21,8 +18,6 @@ public class ActuatorState {
   private final Runnable doOnOpenNegative;
   private final Runnable doOnStop;
   private final AtomicReference<Duration> targetPositiveElapsed = new AtomicReference<>(Duration.ZERO);
-  private final AtomicReference<ScheduledFuture<?>> thread = new AtomicReference<>(); // TODO Move to watchdog thread
-  private final ScheduledExecutorService executorService;
 
   @JsonProperty
   private State state = State.STOPPED;
@@ -31,6 +26,7 @@ public class ActuatorState {
 
   @JsonProperty
   private Duration currentPositiveElapsed = Duration.ZERO;
+  private final WatchdogThread thread;
 
   public ActuatorState(String name, Duration max, Runnable doOnOpenPositive, Runnable doOnOpenNegative, Runnable doOnStop) {
     this.name = name;
@@ -38,11 +34,7 @@ public class ActuatorState {
     this.doOnOpenPositive = doOnOpenPositive;
     this.doOnOpenNegative = doOnOpenNegative;
     this.doOnStop = doOnStop;
-    executorService = Executors.newSingleThreadScheduledExecutor(runnable -> {
-      Thread newThread = new Thread(runnable, "ActuatorState-" + name);
-      newThread.setDaemon(true);
-      return newThread;
-    });
+    thread = new WatchdogThread(name, this::doStep);
   }
 
   public ActuatorState(String name, Duration max, PinController pinController, Pin openPositivePin, Pin openNegativePin) {
@@ -79,16 +71,6 @@ public class ActuatorState {
     return new Percent(currentPositiveElapsed.toMillis(), max.toMillis());
   }
 
-  @Synchronized
-  private void initStepThreadIfNotAlreadyStarted() {
-    ScheduledFuture<?> scheduledFuture1 = thread.get();
-    if (scheduledFuture1 != null && !scheduledFuture1.isDone() && !scheduledFuture1.isCancelled()) {
-      return;
-    }
-    thread.set(executorService.scheduleAtFixedRate(this::doStep, // Do update every 100ms
-        0, STEP.toMillis(), TimeUnit.MILLISECONDS));
-  }
-
   private void doStep() {
     State newState = determineNewState();
 
@@ -120,9 +102,7 @@ public class ActuatorState {
         case OPENING_NEGATIVE -> doOnOpenNegative.run();
         case STOPPED -> {
           doOnStop.run();
-          thread
-              .get()
-              .cancel(false);
+          thread.stop();
         }
       }
     }
@@ -144,11 +124,9 @@ public class ActuatorState {
   }
 
   public void requestMoveTo(Duration target) {
-    Duration min = Duration.ZERO;
-    Duration max1 = max;
-    target = DurationUtils.clampDuration(target, min, max1);
+    target = DurationUtils.clampDuration(target, Duration.ZERO, max);
     targetPositiveElapsed.set(target);
-    initStepThreadIfNotAlreadyStarted();
+    thread.start();
   }
 
   public void requestMoveToMax() {

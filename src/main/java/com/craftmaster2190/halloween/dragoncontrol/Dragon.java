@@ -11,7 +11,7 @@ public class Dragon {
   private final DragonLongNeck longNeck;
   private final DragonRightWing rightWing;
   @JsonIgnore
-  private final SoundPlayer soundPlayer;
+  private final SoundPlayerService soundPlayerService;
 
   private State state = State.ASLEEP;
 
@@ -42,7 +42,7 @@ public class Dragon {
     state = State.SITTING_UP_TO_ROAR;
     // TODO Wait for neck to extend
     state = State.ROARING;
-    soundPlayer.playRoar();
+    soundPlayerService.playRoar();
     // TODO Move back to AWAKE after roar is done
   }
 }
