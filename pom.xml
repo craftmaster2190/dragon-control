@@ -63,6 +63,12 @@
       <artifactId>lombok</artifactId>
       <scope>annotationProcessor</scope>
     </dependency>
+
+    <dependency>
+      <groupId>com.pi4j</groupId>
+      <artifactId>pi4j-core</artifactId>
+      <version>3.0.3</version>
+    </dependency>
   </dependencies>
 
   <build>
