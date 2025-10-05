@@ -4,6 +4,7 @@ import com.fasterxml.jackson.annotation.*;
 import jakarta.annotation.Nullable;
 import java.time.*;
 import java.util.concurrent.atomic.AtomicReference;
+import lombok.Getter;
 
 import static com.fasterxml.jackson.annotation.JsonAutoDetect.Visibility.NONE;
 
@@ -28,28 +29,27 @@ public class ActuatorState {
   private Duration currentPositiveElapsed = Duration.ZERO;
   private final WatchdogThread thread;
 
-  public ActuatorState(String name, Duration max, Runnable doOnOpenPositive, Runnable doOnOpenNegative, Runnable doOnStop) {
+  /**
+   * Used for raw access to the switch
+   */
+  @Getter
+  private final Chicago3WaySwitch actuatorSwitch;
+
+  private ActuatorState(String name, Duration max, Runnable doOnOpenPositive, Runnable doOnOpenNegative, Runnable doOnStop, Chicago3WaySwitch actuatorSwitch) {
     this.name = name;
     this.max = max;
     this.doOnOpenPositive = doOnOpenPositive;
     this.doOnOpenNegative = doOnOpenNegative;
     this.doOnStop = doOnStop;
     thread = new WatchdogThread(name, this::doStep);
+    this.actuatorSwitch = actuatorSwitch;
   }
 
-  public ActuatorState(String name, Duration max, PinController pinController, Pin openPositivePin, Pin openNegativePin) {
-    this(name, max, () -> {
-          pinController.closePin(openNegativePin);
-          pinController.openPin(openPositivePin);
-        },
-        () -> {
-          pinController.closePin(openPositivePin);
-          pinController.openPin(openNegativePin);
-        },
-        () -> {
-          pinController.closePin(openPositivePin);
-          pinController.closePin(openNegativePin);
-        });
+  public ActuatorState(String name, Duration max, Chicago3WaySwitch actuatorSwitch) {
+    this(name, max,
+        () -> actuatorSwitch.setState(Chicago3WaySwitch.State.UP),
+        () -> actuatorSwitch.setState(Chicago3WaySwitch.State.DOWN),
+        () -> actuatorSwitch.setState(Chicago3WaySwitch.State.OFF), actuatorSwitch);
   }
 
   @Override

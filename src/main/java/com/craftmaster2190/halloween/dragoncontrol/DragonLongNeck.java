@@ -14,20 +14,17 @@ public class DragonLongNeck {
 
   public DragonLongNeck(PinController pinController) {
     lowerNeckLeft = new ActuatorState("LowerNeckLeft",
-        Duration.ofSeconds(4),
-        pinController,
-        Pin.LOWER_LEFT_NECK_NEGATIVE,
-        Pin.LOWER_LEFT_NECK_POSITIVE);
+        Duration.ofSeconds(4), new Chicago3WaySwitch(pinController,
+        Pin.LOWER_LEFT_NECK_POSITIVE,
+        Pin.LOWER_LEFT_NECK_NEGATIVE));
     lowerNeckRight = new ActuatorState("LowerNeckRight",
-        Duration.ofSeconds(4),
-        pinController,
-        Pin.LOWER_RIGHT_NECK_NEGATIVE,
-        Pin.LOWER_RIGHT_NECK_POSITIVE);
+        Duration.ofSeconds(4), new Chicago3WaySwitch(pinController,
+        Pin.LOWER_RIGHT_NECK_POSITIVE,
+        Pin.LOWER_RIGHT_NECK_NEGATIVE));
     midNeckVertical = new ActuatorState("MidNeckVertical",
-        Duration.ofSeconds(4),
-        pinController,
-        Pin.MID_NECK_VERTICAL_NEGATIVE,
-        Pin.MID_NECK_VERTICAL_POSITIVE);
+        Duration.ofSeconds(4), new Chicago3WaySwitch(pinController,
+        Pin.MID_NECK_VERTICAL_POSITIVE,
+        Pin.MID_NECK_VERTICAL_NEGATIVE));
   }
 
   public void sleep() {

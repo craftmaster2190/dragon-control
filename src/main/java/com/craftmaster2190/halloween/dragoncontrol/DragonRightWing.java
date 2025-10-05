@@ -11,11 +11,10 @@ public class DragonRightWing {
   private final ActuatorState rightHand;
 
   public DragonRightWing(PinController pinController) {
+    var rightHandRaw = new Chicago3WaySwitch(pinController, Pin.RIGHT_WING_POSITIVE, Pin.RIGHT_WING_NEGATIVE);
+
     rightHand = new ActuatorState("RightHand",
-        Duration.ofSeconds(5),
-        pinController,
-        Pin.RIGHT_WING_NEGATIVE,
-        Pin.RIGHT_WING_POSITIVE);
+        Duration.ofSeconds(5), new Chicago3WaySwitch(pinController, Pin.RIGHT_WING_POSITIVE, Pin.RIGHT_WING_NEGATIVE));
   }
 
   public void extend() {
