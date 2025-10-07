@@ -10,7 +10,7 @@
   </parent>
   <groupId>com.craftmaster2190.halloween</groupId>
   <artifactId>dragon-control</artifactId>
-  <version>0.0.1-SNAPSHOT</version>
+  <version>0.0.1</version>
   <name>Dragon Control</name>
   <description>Control the Halloween dragon</description>
   <url/>

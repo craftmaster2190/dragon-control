@@ -1,0 +1,12 @@
+[Unit]
+Description=Dragon Control Service
+After=network-online.target
+
+[Service]
+ExecStart=/usr/bin/java -jar /home/dragon/dragon-control.jar
+WorkingDirectory=/home/dragon/
+Restart=always
+User=root
+
+[Install]
+WantedBy=multi-user.target

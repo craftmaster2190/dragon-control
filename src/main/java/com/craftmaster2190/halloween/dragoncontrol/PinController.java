@@ -1,6 +1,7 @@
 package com.craftmaster2190.halloween.dragoncontrol;
 
 import com.pi4j.Pi4J;
+import com.pi4j.boardinfo.util.BoardInfoHelper;
 import com.pi4j.context.Context;
 import com.pi4j.io.gpio.digital.DigitalOutput;
 import jakarta.annotation.*;
@@ -15,13 +16,14 @@ import org.springframework.stereotype.Component;
 @Component
 public class PinController {
 
-  private static final boolean IS_RASPBERRY_PI = new RaspberryPiDetector().isRaspberryPi();
+  private static final boolean IS_RASPBERRY_PI = BoardInfoHelper.runningOnRaspberryPi();
   private final AtomicReference<Context> pi4j = new AtomicReference<>();
   private final Map<Pin, DigitalOutput> pinMapping = new ConcurrentHashMap<>();
 
   @PostConstruct
   public void init() {
     if (!IS_RASPBERRY_PI) {
+      log.warn("Not running on Raspberry Pi. GPIO pins will NOT be controlled.");
       return;
     }
     log.info("Running on Raspberry Pi. GPIO pins will be controlled.");
