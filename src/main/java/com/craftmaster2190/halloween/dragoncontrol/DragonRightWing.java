@@ -11,10 +11,8 @@ public class DragonRightWing {
   private final ActuatorState rightHand;
 
   public DragonRightWing(PinController pinController) {
-    var rightHandRaw = new Chicago3WaySwitch(pinController, Pin.RIGHT_WING_POSITIVE, Pin.RIGHT_WING_NEGATIVE);
-
     rightHand = new ActuatorState("RightHand",
-        Duration.ofSeconds(5), new Chicago3WaySwitch(pinController, Pin.RIGHT_WING_POSITIVE, Pin.RIGHT_WING_NEGATIVE));
+        Duration.ofSeconds(5), new Chicago3WaySwitch(pinController, NamedGpioPin.RIGHT_WING_POSITIVE, NamedGpioPin.RIGHT_WING_NEGATIVE));
   }
 
   public void extend() {
@@ -23,5 +21,9 @@ public class DragonRightWing {
 
   public void retract() {
 
+  }
+
+  public void stop() {
+    rightHand.stop();
   }
 }

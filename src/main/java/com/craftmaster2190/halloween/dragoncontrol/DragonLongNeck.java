@@ -10,25 +10,21 @@ public class DragonLongNeck {
 
   private final ActuatorState lowerNeckLeft;
   private final ActuatorState lowerNeckRight;
-  private final ActuatorState midNeckVertical;
 
   public DragonLongNeck(PinController pinController) {
     lowerNeckLeft = new ActuatorState("LowerNeckLeft",
         Duration.ofSeconds(4), new Chicago3WaySwitch(pinController,
-        Pin.LOWER_LEFT_NECK_POSITIVE,
-        Pin.LOWER_LEFT_NECK_NEGATIVE));
+        NamedGpioPin.LOWER_LEFT_NECK_POSITIVE,
+        NamedGpioPin.LOWER_LEFT_NECK_NEGATIVE));
     lowerNeckRight = new ActuatorState("LowerNeckRight",
         Duration.ofSeconds(4), new Chicago3WaySwitch(pinController,
-        Pin.LOWER_RIGHT_NECK_POSITIVE,
-        Pin.LOWER_RIGHT_NECK_NEGATIVE));
-    midNeckVertical = new ActuatorState("MidNeckVertical",
-        Duration.ofSeconds(4), new Chicago3WaySwitch(pinController,
-        Pin.MID_NECK_VERTICAL_POSITIVE,
-        Pin.MID_NECK_VERTICAL_NEGATIVE));
+        NamedGpioPin.LOWER_RIGHT_NECK_POSITIVE,
+        NamedGpioPin.LOWER_RIGHT_NECK_NEGATIVE));
   }
 
   public void sleep() {
-
+    lowerNeckLeft.requestMoveToZero();
+    lowerNeckRight.requestMoveToZero();
   }
 
   public void wakeUp() {
@@ -37,6 +33,11 @@ public class DragonLongNeck {
 
   public void extendToRoar() {
 
+  }
+
+  public void stop() {
+    lowerNeckLeft.stop();
+    lowerNeckRight.stop();
   }
 }
 

@@ -2,6 +2,7 @@
 
 deploy:
 	@echo "Deploying the application..."
+	(cd dragon-ui && $(MAKE) build-ui)
 	./mvnw clean install
 	scp install-on-pi.sh dragon:~
 	scp target/dragon-control-*.jar dragon:~/dragon-control.jar

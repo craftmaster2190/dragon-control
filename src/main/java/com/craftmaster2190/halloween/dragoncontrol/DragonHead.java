@@ -12,43 +12,58 @@ public class DragonHead {
   private final ActuatorState leftNeck;
   private final ActuatorState rightNeck;
   private final ActuatorState jaw;
-  private final ActuatorState eyes;
-  private final ActuatorState upperLip;
 
   public DragonHead(PinController pinController) {
     leftNeck = new ActuatorState("UpperLeftNeck",
         Duration.ofSeconds(4), new Chicago3WaySwitch(pinController,
-        Pin.UPPER_LEFT_NECK_POSITIVE,
-        Pin.UPPER_LEFT_NECK_NEGATIVE));
+        NamedGpioPin.UPPER_LEFT_NECK_POSITIVE,
+        NamedGpioPin.UPPER_LEFT_NECK_NEGATIVE));
     rightNeck = new ActuatorState("UpperRightNeck",
         Duration.ofSeconds(4), new Chicago3WaySwitch(pinController,
-        Pin.UPPER_RIGHT_NECK_POSITIVE,
-        Pin.UPPER_RIGHT_NECK_NEGATIVE));
+        NamedGpioPin.UPPER_RIGHT_NECK_POSITIVE,
+        NamedGpioPin.UPPER_RIGHT_NECK_NEGATIVE));
     jaw = new ActuatorState("Jaw",
-        Duration.ofSeconds(2), new Chicago3WaySwitch(pinController, Pin.JAW_POSITIVE, Pin.JAW_NEGATIVE));
-    eyes = new ActuatorState("Eyes",
-        Duration.ofSeconds(1), new Chicago3WaySwitch(pinController, Pin.UPPER_LIP_POSITIVE, Pin.UPPER_LIP_NEGATIVE));
-    upperLip = new ActuatorState("UpperLip",
-        Duration.ofSeconds(1), new Chicago3WaySwitch(pinController, Pin.EYES_POSITIVE, Pin.EYES_NEGATIVE));
+        Duration.ofSeconds(2), new Chicago3WaySwitch(pinController, NamedGpioPin.JAW_POSITIVE, NamedGpioPin.JAW_NEGATIVE));
   }
 
   public void sleep() {
-
+    leftNeck.requestMoveToZero();
+    rightNeck.requestMoveToZero();
+    jaw.requestMoveToZero();
   }
 
-  public void wakeUp() {
-
+  public void lookDown() {
+    leftNeck.requestMoveToZero();
+    rightNeck.requestMoveToZero();
   }
 
-  public void blinkEyes() {
-
+  public void lookUp() {
+    leftNeck.requestMoveToMax();
+    rightNeck.requestMoveToMax();
   }
 
-  public void growl() {
+  public void lookLeft() {
+    leftNeck.requestMoveToZero();
+    rightNeck.requestMoveToPercentage(0.5);
+  }
 
+  public void lookRight() {
+    leftNeck.requestMoveToPercentage(0.5);
+    rightNeck.requestMoveToZero();
+  }
+
+  public void closeJaw() {
+    jaw.requestMoveToZero();
   }
 
   public void openJaw() {
-
+    jaw.requestMoveToMax();
   }
+
+  public void stop() {
+    leftNeck.stop();
+    rightNeck.stop();
+    jaw.stop();
+  }
+
 }

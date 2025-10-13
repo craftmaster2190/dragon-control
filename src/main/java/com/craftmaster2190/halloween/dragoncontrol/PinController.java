@@ -5,7 +5,7 @@ import com.pi4j.boardinfo.util.BoardInfoHelper;
 import com.pi4j.context.Context;
 import com.pi4j.io.gpio.digital.DigitalOutput;
 import jakarta.annotation.*;
-import java.util.Map;
+import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicReference;
 import lombok.extern.slf4j.Slf4j;
@@ -18,7 +18,7 @@ public class PinController {
 
   private static final boolean IS_RASPBERRY_PI = BoardInfoHelper.runningOnRaspberryPi();
   private final AtomicReference<Context> pi4j = new AtomicReference<>();
-  private final Map<Pin, DigitalOutput> pinMapping = new ConcurrentHashMap<>();
+  private final Map<NamedGpioPin, DigitalOutput> pinMapping = new ConcurrentHashMap<>();
 
   @PostConstruct
   public void init() {
@@ -28,17 +28,23 @@ public class PinController {
     }
     log.info("Running on Raspberry Pi. GPIO pins will be controlled.");
     pi4j.set(Pi4J.newAutoContext());
+    resetAllPins();
   }
 
   @PreDestroy
   public void shutdown() {
     Context pi4j = this.pi4j.get();
     if (pi4j != null) {
+      resetAllPins();
       pi4j.shutdown();
     }
   }
 
-  public void openPin(Pin pin) {
+  private void resetAllPins() {
+    Arrays.stream(NamedGpioPin.values()).forEach(this::closePin);
+  }
+
+  public void openPin(NamedGpioPin pin) {
     log.info("{} opened", pin);
     if (!IS_RASPBERRY_PI) {
       return;
@@ -46,7 +52,7 @@ public class PinController {
     getDigitalOutput(pin).high();
   }
 
-  public void closePin(Pin pin) {
+  public void closePin(NamedGpioPin pin) {
     log.info("{} closed", pin);
     if (!IS_RASPBERRY_PI) {
       return;
@@ -54,11 +60,11 @@ public class PinController {
     getDigitalOutput(pin).low();
   }
 
-  private DigitalOutput getDigitalOutput(Pin pin) {
+  private DigitalOutput getDigitalOutput(NamedGpioPin pin) {
     return pinMapping.computeIfAbsent(pin,
         p -> pi4j
             .get()
             .digitalOutput()
-            .create(pin.getPinNumber()));
+            .create(pin.getRelaySwitch().getPin().getBcmNumber()));
   }
 }

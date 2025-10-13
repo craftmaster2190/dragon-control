@@ -21,7 +21,7 @@ public class Chicago3WaySwitch {
     }
   }
 
-  public Chicago3WaySwitch(PinController pinController, Pin upPin, Pin downPin) {
+  public Chicago3WaySwitch(PinController pinController, NamedGpioPin upPin, NamedGpioPin downPin) {
     this.onUp = () -> {
       pinController.closePin(downPin);
       pinController.openPin(upPin);

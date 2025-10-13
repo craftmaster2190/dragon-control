@@ -1,8 +1,11 @@
 package com.craftmaster2190.halloween.dragoncontrol;
 
 import com.fasterxml.jackson.annotation.*;
+import java.time.Duration;
 import lombok.Data;
 import org.springframework.stereotype.Component;
+
+import static com.craftmaster2190.halloween.dragoncontrol.ActuatorState.State.OPENING_NEGATIVE;
 
 @Component
 @Data
@@ -14,6 +17,24 @@ public class Dragon {
   private final SoundPlayerService soundPlayerService;
 
   private State state = State.ASLEEP;
+
+  public void stop() {
+    head.stop();
+    longNeck.stop();
+    rightWing.stop();
+  }
+
+  public void reset() throws InterruptedException {
+    stop();
+    head.getJaw().forceState(OPENING_NEGATIVE);
+    head.getLeftNeck().forceState(OPENING_NEGATIVE);
+    head.getRightNeck().forceState(OPENING_NEGATIVE);
+    longNeck.getLowerNeckLeft().forceState(OPENING_NEGATIVE);
+    longNeck.getLowerNeckRight().forceState(OPENING_NEGATIVE);
+    rightWing.getRightHand().forceState(OPENING_NEGATIVE);
+    state = State.ASLEEP;
+    Thread.currentThread().sleep(Duration.ofSeconds(20).toMillis());
+  }
 
   enum State {
     ASLEEP,

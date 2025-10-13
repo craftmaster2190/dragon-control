@@ -3,6 +3,7 @@ Description=Dragon Control Service
 After=network-online.target
 
 [Service]
+Environment="SERVER_PORT=80"
 ExecStart=/usr/bin/java -jar /home/dragon/dragon-control.jar
 WorkingDirectory=/home/dragon/
 Restart=always

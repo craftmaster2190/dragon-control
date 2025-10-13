@@ -5,9 +5,11 @@ import jakarta.annotation.Nullable;
 import java.time.*;
 import java.util.concurrent.atomic.AtomicReference;
 import lombok.Getter;
+import lombok.extern.slf4j.Slf4j;
 
 import static com.fasterxml.jackson.annotation.JsonAutoDetect.Visibility.NONE;
 
+@Slf4j
 @JsonAutoDetect(fieldVisibility = NONE, getterVisibility = NONE) // Disable auto-detection of fields
 public class ActuatorState {
 
@@ -21,12 +23,12 @@ public class ActuatorState {
   private final AtomicReference<Duration> targetPositiveElapsed = new AtomicReference<>(Duration.ZERO);
 
   @JsonProperty
-  private State state = State.STOPPED;
+  private volatile State state = State.STOPPED;
   @Nullable
-  private Instant lastUpdate;
+  private volatile Instant lastUpdate;
 
   @JsonProperty
-  private Duration currentPositiveElapsed = Duration.ZERO;
+  private volatile Duration currentPositiveElapsed = Duration.ZERO;
   private final WatchdogThread thread;
 
   /**
@@ -77,6 +79,8 @@ public class ActuatorState {
     // The actual step may vary from the 100ms we requested, so calculate the actual time passed
     var actualStepValue = lastUpdate == null ? Duration.ZERO : Duration.between(lastUpdate, Instant.now());
     lastUpdate = Instant.now();
+    log.info("{}: Step called, actual step value: {}, current state: {}, new state: {}, target: {}, current: {}",
+        name, actualStepValue, state, newState, targetPositiveElapsed.get(), currentPositiveElapsed);
 
     // Handle update of current position
     if (newState == State.OPENING_POSITIVE) {
@@ -89,6 +93,7 @@ public class ActuatorState {
     else if (newState == State.OPENING_NEGATIVE) {
       currentPositiveElapsed = currentPositiveElapsed.minus(actualStepValue);
       if (currentPositiveElapsed.compareTo(Duration.ZERO) < 0) {
+        log.info("{}: Current position ({}) went below zero, clamping to zero", name, currentPositiveElapsed);
         currentPositiveElapsed = Duration.ZERO;
         newState = State.STOPPED;
       }
@@ -96,14 +101,19 @@ public class ActuatorState {
 
     // Handle state change
     if (state != newState) {
-      state = newState;
-      switch (state) {
-        case OPENING_POSITIVE -> doOnOpenPositive.run();
-        case OPENING_NEGATIVE -> doOnOpenNegative.run();
-        case STOPPED -> {
-          doOnStop.run();
-          thread.stop();
-        }
+      forceState(newState);
+    }
+  }
+
+  public void forceState(State newState) {
+    state = newState;
+    switch (state) {
+      case OPENING_POSITIVE -> doOnOpenPositive.run();
+      case OPENING_NEGATIVE -> doOnOpenNegative.run();
+      case STOPPED -> {
+        doOnStop.run();
+        lastUpdate = null;
+        thread.stop();
       }
     }
   }
@@ -144,7 +154,12 @@ public class ActuatorState {
     requestMoveTo(Duration.ofMillis(((long) (max.toMillis() * percentage))));
   }
 
-  private enum State {
+  public void stop() {
+    targetPositiveElapsed.set(currentPositiveElapsed);
+    thread.start();
+  }
+
+  public enum State {
     OPENING_POSITIVE,
     OPENING_NEGATIVE,
     STOPPED
