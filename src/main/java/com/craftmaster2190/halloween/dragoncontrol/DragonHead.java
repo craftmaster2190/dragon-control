@@ -15,15 +15,15 @@ public class DragonHead {
 
   public DragonHead(PinController pinController) {
     leftNeck = new ActuatorState("UpperLeftNeck",
-        Duration.ofSeconds(4), new Chicago3WaySwitch(pinController,
+        Duration.ofSeconds(20), new Chicago3WaySwitch(pinController,
         NamedGpioPin.UPPER_LEFT_NECK_POSITIVE,
         NamedGpioPin.UPPER_LEFT_NECK_NEGATIVE));
     rightNeck = new ActuatorState("UpperRightNeck",
-        Duration.ofSeconds(4), new Chicago3WaySwitch(pinController,
+        Duration.ofSeconds(20), new Chicago3WaySwitch(pinController,
         NamedGpioPin.UPPER_RIGHT_NECK_POSITIVE,
         NamedGpioPin.UPPER_RIGHT_NECK_NEGATIVE));
     jaw = new ActuatorState("Jaw",
-        Duration.ofSeconds(2), new Chicago3WaySwitch(pinController, NamedGpioPin.JAW_POSITIVE, NamedGpioPin.JAW_NEGATIVE));
+        Duration.ofSeconds(6), new Chicago3WaySwitch(pinController, NamedGpioPin.JAW_POSITIVE, NamedGpioPin.JAW_NEGATIVE));
   }
 
   public void sleep() {

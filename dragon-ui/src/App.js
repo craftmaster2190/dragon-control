@@ -6,7 +6,7 @@ function adminMove({part, percent}) {
     return axios.post("/dragon/admin-move", {part, percent});
 }
 
-const adminParts = ["head.jaw", "head.leftneck", "head.rightneck", "neck.lowerleft", "neck.lowerright", "rightwing.hand"]
+const adminParts = ["all", "head.neck.both", "neck.lower.both", "head.jaw", "head.leftneck", "head.rightneck", "neck.lowerleft", "neck.lowerright", "rightwing.hand"]
 
 function App() {
     const [dragon, setDragon] = useState(null);

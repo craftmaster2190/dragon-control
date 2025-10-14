@@ -21,21 +21,18 @@ public class ActuatorState {
   private final Runnable doOnOpenNegative;
   private final Runnable doOnStop;
   private final AtomicReference<Duration> targetPositiveElapsed = new AtomicReference<>(Duration.ZERO);
-
-  @JsonProperty
-  private volatile State state = State.STOPPED;
-  @Nullable
-  private volatile Instant lastUpdate;
-
-  @JsonProperty
-  private volatile Duration currentPositiveElapsed = Duration.ZERO;
   private final WatchdogThread thread;
-
   /**
    * Used for raw access to the switch
    */
   @Getter
   private final Chicago3WaySwitch actuatorSwitch;
+  @JsonProperty
+  private volatile State state = State.STOPPED;
+  @Nullable
+  private volatile Instant lastUpdate;
+  @JsonProperty
+  private volatile Duration currentPositiveElapsed = Duration.ZERO;
 
   private ActuatorState(String name, Duration max, Runnable doOnOpenPositive, Runnable doOnOpenNegative, Runnable doOnStop, Chicago3WaySwitch actuatorSwitch) {
     this.name = name;
@@ -103,6 +100,9 @@ public class ActuatorState {
     if (state != newState) {
       forceState(newState);
     }
+    if (state == State.STOPPED) {
+      doStop();
+    }
   }
 
   public void forceState(State newState) {
@@ -110,12 +110,14 @@ public class ActuatorState {
     switch (state) {
       case OPENING_POSITIVE -> doOnOpenPositive.run();
       case OPENING_NEGATIVE -> doOnOpenNegative.run();
-      case STOPPED -> {
-        doOnStop.run();
-        lastUpdate = null;
-        thread.stop();
-      }
+      case STOPPED -> doStop();
     }
+  }
+
+  private void doStop() {
+    doOnStop.run();
+    lastUpdate = null;
+    thread.stop();
   }
 
   private State determineNewState() {
