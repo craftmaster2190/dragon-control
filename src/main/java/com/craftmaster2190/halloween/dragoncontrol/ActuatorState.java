@@ -4,7 +4,7 @@ import com.fasterxml.jackson.annotation.*;
 import jakarta.annotation.Nullable;
 import java.time.*;
 import java.util.concurrent.atomic.AtomicReference;
-import lombok.Getter;
+import lombok.*;
 import lombok.extern.slf4j.Slf4j;
 
 import static com.fasterxml.jackson.annotation.JsonAutoDetect.Visibility.NONE;
@@ -13,10 +13,17 @@ import static com.fasterxml.jackson.annotation.JsonAutoDetect.Visibility.NONE;
 @JsonAutoDetect(fieldVisibility = NONE, getterVisibility = NONE) // Disable auto-detection of fields
 public class ActuatorState {
 
+  public static final WhenStateAdjustment OPENS_FASTER = new WhenStateAdjustment(
+      State.OPENING_NEGATIVE,
+      0.1);
+  public static final WhenStateAdjustment CLOSES_FASTER = new WhenStateAdjustment(
+      State.OPENING_POSITIVE,
+      0.1);
   @JsonProperty
   private final String name;
   @JsonProperty
   private final Duration max;
+  private final WhenStateAdjustment whenStateAdjustment;
   private final Runnable doOnOpenPositive;
   private final Runnable doOnOpenNegative;
   private final Runnable doOnStop;
@@ -34,9 +41,11 @@ public class ActuatorState {
   @JsonProperty
   private volatile Duration currentPositiveElapsed = Duration.ZERO;
 
-  private ActuatorState(String name, Duration max, Runnable doOnOpenPositive, Runnable doOnOpenNegative, Runnable doOnStop, Chicago3WaySwitch actuatorSwitch) {
+  private ActuatorState(String name, Duration max, WhenStateAdjustment whenStateAdjustment,
+                        Runnable doOnOpenPositive, Runnable doOnOpenNegative, Runnable doOnStop, Chicago3WaySwitch actuatorSwitch) {
     this.name = name;
     this.max = max;
+    this.whenStateAdjustment = whenStateAdjustment;
     this.doOnOpenPositive = doOnOpenPositive;
     this.doOnOpenNegative = doOnOpenNegative;
     this.doOnStop = doOnStop;
@@ -44,8 +53,8 @@ public class ActuatorState {
     this.actuatorSwitch = actuatorSwitch;
   }
 
-  public ActuatorState(String name, Duration max, Chicago3WaySwitch actuatorSwitch) {
-    this(name, max,
+  public ActuatorState(String name, Duration max, WhenStateAdjustment whenStateAdjustment, Chicago3WaySwitch actuatorSwitch) {
+    this(name, max, whenStateAdjustment,
         () -> actuatorSwitch.setState(Chicago3WaySwitch.State.UP),
         () -> actuatorSwitch.setState(Chicago3WaySwitch.State.DOWN),
         () -> actuatorSwitch.setState(Chicago3WaySwitch.State.OFF), actuatorSwitch);
@@ -78,6 +87,8 @@ public class ActuatorState {
     lastUpdate = Instant.now();
     log.info("{}: Step called, actual step value: {}, current state: {}, new state: {}, target: {}, current: {}",
         name, actualStepValue, state, newState, targetPositiveElapsed.get(), currentPositiveElapsed);
+
+    actualStepValue = whenStateAdjustment.adjust(newState, actualStepValue);
 
     // Handle update of current position
     if (newState == State.OPENING_POSITIVE) {
@@ -165,5 +176,22 @@ public class ActuatorState {
     OPENING_POSITIVE,
     OPENING_NEGATIVE,
     STOPPED
+  }
+
+  @Data
+  public static class WhenStateAdjustment {
+    private final State state;
+    private final double percentage;
+
+    public Duration adjust(State currentState, Duration currentDuration) {
+      if (this.state != currentState) {
+        return currentDuration;
+      }
+      long adjustedMillis = (long) (currentDuration.toMillis() * percentage);
+      Duration newDuration = Duration.ofMillis(adjustedMillis);
+      log.info("Adjusting duration from {} to {} for state {}", currentDuration, newDuration, currentState);
+      return newDuration;
+    }
+
   }
 }

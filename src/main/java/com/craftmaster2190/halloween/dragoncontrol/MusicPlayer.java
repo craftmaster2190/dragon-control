@@ -6,7 +6,7 @@ import org.springframework.stereotype.Component;
 @Component
 @RequiredArgsConstructor
 public class MusicPlayer {
-  private final SoundPlayerService soundPlayerService;
+//  private final SoundPlayerService soundPlayerService;
 
   public void playMusic() {
     // TODO Play music: shuffle repeat all

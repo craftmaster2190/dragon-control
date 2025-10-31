@@ -21,8 +21,9 @@ public class WatchdogThread implements Closeable {
     this.doStep = doStep;
   }
 
-  public void start() {
+  public WatchdogThread start() {
     initStepThreadIfNotAlreadyStarted();
+    return this;
   }
 
   public void stop() {

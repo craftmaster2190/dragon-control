@@ -21,21 +21,6 @@ public class DragonController {
     dragon.stop();
   }
 
-  @PostMapping("sleep")
-  public void sleep() {
-    dragon.sleep();
-  }
-
-  @PostMapping("wakeUp")
-  public void wakeUp() {
-    dragon.wakeUp();
-  }
-
-  @PostMapping("roar")
-  public void roar() {
-    dragon.roar();
-  }
-
   @GetMapping
   public Dragon getDragon() {
     return dragon;
@@ -70,7 +55,6 @@ public class DragonController {
       case "head.rightneck" -> dragon.getHead().getRightNeck();
       case "neck.lowerleft" -> dragon.getLongNeck().getLowerNeckLeft();
       case "neck.lowerright" -> dragon.getLongNeck().getLowerNeckRight();
-      case "rightwing.hand" -> dragon.getRightWing().getRightHand();
       default -> throw new IllegalArgumentException("Unknown part: " + adminMoveRequest.part());
     };
     part.requestMoveToPercentage(adminMoveRequest.percent());

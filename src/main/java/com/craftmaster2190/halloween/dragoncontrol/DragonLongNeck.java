@@ -13,11 +13,11 @@ public class DragonLongNeck {
 
   public DragonLongNeck(PinController pinController) {
     lowerNeckLeft = new ActuatorState("LowerNeckLeft",
-        Duration.ofSeconds(20), new Chicago3WaySwitch(pinController,
+        Duration.ofSeconds(20), ActuatorState.CLOSES_FASTER, new Chicago3WaySwitch(pinController,
         NamedGpioPin.LOWER_LEFT_NECK_POSITIVE,
         NamedGpioPin.LOWER_LEFT_NECK_NEGATIVE));
     lowerNeckRight = new ActuatorState("LowerNeckRight",
-        Duration.ofSeconds(20), new Chicago3WaySwitch(pinController,
+        Duration.ofSeconds(20), ActuatorState.CLOSES_FASTER, new Chicago3WaySwitch(pinController,
         NamedGpioPin.LOWER_RIGHT_NECK_POSITIVE,
         NamedGpioPin.LOWER_RIGHT_NECK_NEGATIVE));
   }
@@ -25,14 +25,6 @@ public class DragonLongNeck {
   public void sleep() {
     lowerNeckLeft.requestMoveToZero();
     lowerNeckRight.requestMoveToZero();
-  }
-
-  public void wakeUp() {
-
-  }
-
-  public void extendToRoar() {
-
   }
 
   public void stop() {

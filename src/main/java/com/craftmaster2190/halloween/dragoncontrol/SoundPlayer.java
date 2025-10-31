@@ -24,19 +24,23 @@ public class SoundPlayer implements Closeable {
   private AudioInputStream audioStream;
   private Clip audioClip;
 
-  public void play() throws IOException, UnsupportedAudioFileException, LineUnavailableException {
+  public void play() {
     if (!playbackCompleted) {
       log.warn("Attempted to start playback while another playback is active. soundFile={}", soundFile);
       return;
     }
-    soundFileInputStream = soundFile.getInputStream();
-    audioStream = AudioSystem.getAudioInputStream(soundFileInputStream);
-    AudioFormat audioFormat = audioStream.getFormat();
-    DataLine.Info info = new DataLine.Info(SourceDataLine.class, audioFormat);
-    audioClip = (Clip) AudioSystem.getLine(info);
-    audioClip.addLineListener(lineListener);
-    audioClip.open(audioStream);
-    audioClip.start();
+    try {
+      soundFileInputStream = soundFile.getInputStream();
+      audioStream = AudioSystem.getAudioInputStream(soundFileInputStream);
+      AudioFormat audioFormat = audioStream.getFormat();
+      DataLine.Info info = new DataLine.Info(SourceDataLine.class, audioFormat);
+      audioClip = (Clip) AudioSystem.getLine(info);
+      audioClip.addLineListener(lineListener);
+      audioClip.open(audioStream);
+      audioClip.start();
+    } catch (Exception e) {
+      log.error("Error playing sound file: {}", soundFile, e);
+    }
   }
 
   public void stop() {
