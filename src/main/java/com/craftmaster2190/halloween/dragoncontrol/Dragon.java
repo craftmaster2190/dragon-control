@@ -23,7 +23,7 @@ public class Dragon {
     state = State.RESETTING;
     stop();
     for(Instant start = Instant.now();
-        Duration.between(start, Instant.now()).compareTo(Duration.ofSeconds(20)) > 0;
+        Duration.between(start, Instant.now()).compareTo(Duration.ofSeconds(20)) < 0;
         Thread.currentThread().sleep(1000)) {
       ActuatorState[] parts = new ActuatorState[]{ head.getJaw(), head.getLeftNeck(), head.getRightNeck(), longNeck.getLowerNeckLeft(), longNeck.getLowerNeckRight() };
       for (var part : parts) {

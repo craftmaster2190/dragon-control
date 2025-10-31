@@ -27,6 +27,11 @@ public class DragonLongNeck {
     lowerNeckRight.requestMoveToZero();
   }
 
+  public void setBoth(double percentage) {
+    lowerNeckLeft.requestMoveToPercentage(percentage);
+    lowerNeckRight.requestMoveToPercentage(percentage);
+  }
+
   public void stop() {
     lowerNeckLeft.stop();
     lowerNeckRight.stop();

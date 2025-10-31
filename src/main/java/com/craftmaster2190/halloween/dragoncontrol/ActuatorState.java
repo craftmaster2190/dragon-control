@@ -85,7 +85,7 @@ public class ActuatorState {
     // The actual step may vary from the 100ms we requested, so calculate the actual time passed
     var actualStepValue = lastUpdate == null ? Duration.ZERO : Duration.between(lastUpdate, Instant.now());
     lastUpdate = Instant.now();
-    log.info("{}: Step called, actual step value: {}, current state: {}, new state: {}, target: {}, current: {}",
+    log.debug("{}: Step called, actual step value: {}, current state: {}, new state: {}, target: {}, current: {}",
         name, actualStepValue, state, newState, targetPositiveElapsed.get(), currentPositiveElapsed);
 
     actualStepValue = whenStateAdjustment.adjust(newState, actualStepValue);
@@ -101,7 +101,7 @@ public class ActuatorState {
     else if (newState == State.OPENING_NEGATIVE) {
       currentPositiveElapsed = currentPositiveElapsed.minus(actualStepValue);
       if (currentPositiveElapsed.compareTo(Duration.ZERO) < 0) {
-        log.info("{}: Current position ({}) went below zero, clamping to zero", name, currentPositiveElapsed);
+        log.debug("{}: Current position ({}) went below zero, clamping to zero", name, currentPositiveElapsed);
         currentPositiveElapsed = Duration.ZERO;
         newState = State.STOPPED;
       }
@@ -189,7 +189,7 @@ public class ActuatorState {
       }
       long adjustedMillis = (long) (currentDuration.toMillis() * percentage);
       Duration newDuration = Duration.ofMillis(adjustedMillis);
-      log.info("Adjusting duration from {} to {} for state {}", currentDuration, newDuration, currentState);
+      log.debug("Adjusting duration from {} to {} for state {}", currentDuration, newDuration, currentState);
       return newDuration;
     }
 

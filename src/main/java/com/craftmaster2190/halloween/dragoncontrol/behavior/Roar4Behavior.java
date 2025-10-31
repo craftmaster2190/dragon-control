@@ -7,11 +7,11 @@ import org.springframework.core.io.Resource;
 import org.springframework.stereotype.Component;
 
 @Component
-public class Roar1Behavior implements Behavior {
+public class Roar4Behavior implements Behavior {
   private final Dragon dragon;
   private final SoundPlayer soundPlayer;
 
-  public Roar1Behavior(Dragon dragon, @Value("classpath:loud-roar1-7s.wav") Resource soundfile) {
+  public Roar4Behavior(Dragon dragon, @Value("classpath:loud-roar5-7s.wav") Resource soundfile) {
     this.dragon = dragon;
     this.soundPlayer = new SoundPlayer(soundfile);
   }
@@ -19,15 +19,19 @@ public class Roar1Behavior implements Behavior {
   @Override
   public void perform() throws InterruptedException {
     dragon.getLongNeck().setBoth(1.0);
-    dragon.getHead().getRightNeck().requestMoveToMax();
-    dragon.getHead().getLeftNeck().requestMoveToMax();
-    TimeUnit.SECONDS.sleep(6);
+    dragon.getHead().getRightNeck().requestMoveToPercentage(0.2);
+    dragon.getHead().getLeftNeck().requestMoveToPercentage(0.5);
+    TimeUnit.SECONDS.sleep(5);
 
     dragon.getHead().getJaw().requestMoveToMax();
+    dragon.getHead().getRightNeck().requestMoveToPercentage(1);
+    dragon.getHead().getLeftNeck().requestMoveToPercentage(1);
     soundPlayer.play();
     TimeUnit.SECONDS.sleep(5);
 
     dragon.getHead().getJaw().requestMoveToZero();
-    TimeUnit.SECONDS.sleep(3);
+    dragon.getHead().getRightNeck().requestMoveToPercentage(0.5);
+    dragon.getHead().getLeftNeck().requestMoveToPercentage(0.5);
+    TimeUnit.SECONDS.sleep(5);
   }
 }

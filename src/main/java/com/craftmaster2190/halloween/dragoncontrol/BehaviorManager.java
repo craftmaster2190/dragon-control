@@ -7,8 +7,6 @@ import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicReference;
 import lombok.*;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Value;
-import org.springframework.core.io.Resource;
 import org.springframework.stereotype.Component;
 
 import static lombok.AccessLevel.PRIVATE;
@@ -49,15 +47,19 @@ public class BehaviorManager {
   }
 
   public void performNextBehavior() throws InterruptedException {
-    Behavior behavior = queuedBehaviors.poll();
-    if (behavior != null) {
-      behavior.perform();
-    } else if (Duration.between(lastResetTime.get(), Instant.now()).compareTo(needsToResetEvery) > 0) {
-      lastResetTime.set(Instant.now());
-      resetBehavior.perform();
-    } else {
-      queuedBehaviors.add(ListUtils.random(getActiveBehaviors()));
+    Behavior behavior;
+    while ((behavior = queuedBehaviors.poll()) == null) {
+      if (Duration.between(lastResetTime.get(), Instant.now()).compareTo(needsToResetEvery) > 0) {
+        lastResetTime.set(Instant.now());
+        behavior = resetBehavior;
+        break;
+      } else {
+        queuedBehaviors.add(ListUtils.random(getActiveBehaviors()));
+      }
     }
+    currentBehavior = behavior;
+    log.info("Current Behavior {}", behavior.getClass().getSimpleName());
+    behavior.perform();
   }
 }
 

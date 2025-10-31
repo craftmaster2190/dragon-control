@@ -45,7 +45,7 @@ public class PinController {
   }
 
   public void openPin(NamedGpioPin pin) {
-    log.info("{} opened", pin);
+    log.debug("{} opened", pin);
     if (!IS_RASPBERRY_PI) {
       return;
     }
@@ -53,7 +53,7 @@ public class PinController {
   }
 
   public void closePin(NamedGpioPin pin) {
-    log.info("{} closed", pin);
+    log.debug("{} closed", pin);
     if (!IS_RASPBERRY_PI) {
       return;
     }

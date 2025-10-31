@@ -7,27 +7,24 @@ import org.springframework.core.io.Resource;
 import org.springframework.stereotype.Component;
 
 @Component
-public class Roar1Behavior implements Behavior {
+public class SleepLowGrowl2Behavior implements Behavior {
   private final Dragon dragon;
   private final SoundPlayer soundPlayer;
 
-  public Roar1Behavior(Dragon dragon, @Value("classpath:loud-roar1-7s.wav") Resource soundfile) {
+  public SleepLowGrowl2Behavior(Dragon dragon, @Value("classpath:low-roar3-10s.wav") Resource soundfile) {
     this.dragon = dragon;
     this.soundPlayer = new SoundPlayer(soundfile);
   }
 
   @Override
   public void perform() throws InterruptedException {
-    dragon.getLongNeck().setBoth(1.0);
-    dragon.getHead().getRightNeck().requestMoveToMax();
-    dragon.getHead().getLeftNeck().requestMoveToMax();
-    TimeUnit.SECONDS.sleep(6);
-
-    dragon.getHead().getJaw().requestMoveToMax();
-    soundPlayer.play();
-    TimeUnit.SECONDS.sleep(5);
-
+    dragon.getLongNeck().setBoth(0.0);
+    dragon.getHead().getRightNeck().requestMoveToPercentage(0.0);
+    dragon.getHead().getLeftNeck().requestMoveToPercentage(0.0);
     dragon.getHead().getJaw().requestMoveToZero();
     TimeUnit.SECONDS.sleep(3);
+
+    soundPlayer.play();
+    TimeUnit.SECONDS.sleep(8);
   }
 }

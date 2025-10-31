@@ -7,10 +7,11 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.core.io.Resource;
 
 @Slf4j
-@RequiredArgsConstructor
 public class SoundPlayer implements Closeable {
+  @Getter
   private final Resource soundFile;
   private final LineListener lineListener = event -> {
+    log.debug("SoundPlayer {} has {}", getSoundFile(), event.getType());
     if (LineEvent.Type.START == event.getType()) {
       playbackCompleted = false;
     } else if (LineEvent.Type.STOP == event.getType()) {
@@ -24,17 +25,21 @@ public class SoundPlayer implements Closeable {
   private AudioInputStream audioStream;
   private Clip audioClip;
 
+  public SoundPlayer(Resource soundFile) {
+    this.soundFile = soundFile;
+    Preconditions.checkState(soundFile.exists(), "soundFile is missing: " + soundFile);
+  }
+
   public void play() {
     if (!playbackCompleted) {
       log.warn("Attempted to start playback while another playback is active. soundFile={}", soundFile);
       return;
     }
     try {
+      close(); // if open from previous play
       soundFileInputStream = soundFile.getInputStream();
       audioStream = AudioSystem.getAudioInputStream(soundFileInputStream);
-      AudioFormat audioFormat = audioStream.getFormat();
-      DataLine.Info info = new DataLine.Info(SourceDataLine.class, audioFormat);
-      audioClip = (Clip) AudioSystem.getLine(info);
+      audioClip = AudioSystem.getClip();
       audioClip.addLineListener(lineListener);
       audioClip.open(audioStream);
       audioClip.start();
