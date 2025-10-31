@@ -19,12 +19,10 @@ public class HalfwayLowGrowlBehavior implements Behavior {
   @Override
   public void perform() throws InterruptedException {
     dragon.getLongNeck().setBoth(0.5);
-    dragon.getHead().getRightNeck().requestMoveToPercentage(0.5);
-    dragon.getHead().getLeftNeck().requestMoveToPercentage(0.5);
-    dragon.getHead().getJaw().requestMoveToZero();
-    TimeUnit.SECONDS.sleep(3);
+    dragon.getHead().getRightNeck().requestMoveToPercentage(1);
+    dragon.getHead().getLeftNeck().requestMoveToPercentage(0);
 
-    dragon.getHead().getJaw().requestMoveToPercentage(ThreadLocalRandom.current().nextDouble());
+    dragon.getHead().getJaw().requestMoveToPercentage(0.5);
     soundPlayer.play();
     TimeUnit.SECONDS.sleep(2);
     dragon.getHead().getJaw().requestMoveToZero();

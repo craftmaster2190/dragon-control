@@ -15,5 +15,11 @@ deploy:
 shutdown-pi:
 	ssh dragon 'sudo shutdown now'
 
+reboot-pi:
+	ssh dragon 'sudo reboot'
+
+connect-jbl:
+	ssh dragon 'bluetoothctl connect 68:52:10:2F:9C:1A'
+
 browser:
 	open 'http://192.168.86.7:8080/dragon'

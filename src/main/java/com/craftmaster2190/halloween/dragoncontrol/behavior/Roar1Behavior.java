@@ -21,7 +21,7 @@ public class Roar1Behavior implements Behavior {
     dragon.getLongNeck().setBoth(1.0);
     dragon.getHead().getRightNeck().requestMoveToMax();
     dragon.getHead().getLeftNeck().requestMoveToMax();
-    TimeUnit.SECONDS.sleep(6);
+    TimeUnit.SECONDS.sleep(5);
 
     dragon.getHead().getJaw().requestMoveToMax();
     soundPlayer.play();

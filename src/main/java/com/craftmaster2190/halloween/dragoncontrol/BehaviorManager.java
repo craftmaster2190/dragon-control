@@ -19,10 +19,11 @@ public class BehaviorManager {
   private final List<Behavior> behaviors;
   @Getter(lazy = true, value = PRIVATE)
   private final List<Behavior> activeBehaviors = ListUtils.copyOfAndExclude(behaviors, resetBehavior);
+  @Getter
   private volatile Behavior currentBehavior = null;
 
   private final AtomicReference<Instant> lastResetTime = new AtomicReference<>(Instant.EPOCH);
-  public static final Duration needsToResetEvery = Duration.ofMinutes(1);
+  public static final Duration needsToResetEvery = Duration.ofMinutes(2);
 
   private final Deque<Behavior> queuedBehaviors = new ConcurrentLinkedDeque<>();
 
@@ -54,12 +55,20 @@ public class BehaviorManager {
         behavior = resetBehavior;
         break;
       } else {
-        queuedBehaviors.add(ListUtils.random(getActiveBehaviors()));
+        queuedBehaviors.add(findNextBehavior());
       }
     }
     currentBehavior = behavior;
     log.info("Current Behavior {}", behavior.getClass().getSimpleName());
     behavior.perform();
+  }
+
+  private Behavior findNextBehavior() {
+//    return getActiveBehaviors().stream()
+//        .filter(RandomRoarAndGrowlSequence3Behavior.class::isInstance)
+//        .findFirst().orElseThrow();
+
+    return ListUtils.random(getActiveBehaviors());
   }
 }
 

@@ -22,12 +22,15 @@ public class Dragon {
   public void reset() throws InterruptedException {
     state = State.RESETTING;
     stop();
+    ActuatorState[] parts = new ActuatorState[]{ head.getJaw(), head.getLeftNeck(), head.getRightNeck(), longNeck.getLowerNeckLeft(), longNeck.getLowerNeckRight() };
+    for (var part : parts) {
+      part.requestMoveToZero();
+    }
+
     for(Instant start = Instant.now();
-        Duration.between(start, Instant.now()).compareTo(Duration.ofSeconds(20)) < 0;
+        Duration.between(start, Instant.now()).compareTo(Duration.ofSeconds(21)) < 0;
         Thread.currentThread().sleep(1000)) {
-      ActuatorState[] parts = new ActuatorState[]{ head.getJaw(), head.getLeftNeck(), head.getRightNeck(), longNeck.getLowerNeckLeft(), longNeck.getLowerNeckRight() };
       for (var part : parts) {
-        part.requestMoveToZero();
         part.forceState(OPENING_NEGATIVE);
       }
     }

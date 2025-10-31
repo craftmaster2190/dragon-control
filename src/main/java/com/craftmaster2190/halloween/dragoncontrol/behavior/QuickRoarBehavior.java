@@ -18,9 +18,9 @@ public class QuickRoarBehavior implements Behavior {
 
   @Override
   public void perform() throws InterruptedException {
-    dragon.getLongNeck().setBoth(1.0);
-    dragon.getHead().getRightNeck().requestMoveToPercentage(1);
-    dragon.getHead().getLeftNeck().requestMoveToPercentage(1);
+    dragon.getLongNeck().setBoth(0.5);
+    dragon.getHead().getRightNeck().requestMoveToPercentage(0.5);
+    dragon.getHead().getLeftNeck().requestMoveToPercentage(0.5);
     TimeUnit.SECONDS.sleep(5);
 
     dragon.getHead().getJaw().requestMoveToMax();
@@ -28,8 +28,8 @@ public class QuickRoarBehavior implements Behavior {
     TimeUnit.SECONDS.sleep(3);
 
     dragon.getHead().getJaw().requestMoveToZero();
-    dragon.getHead().getRightNeck().requestMoveToPercentage(0.5);
-    dragon.getHead().getLeftNeck().requestMoveToPercentage(0.5);
+    dragon.getHead().getRightNeck().requestMoveToPercentage(0);
+    dragon.getHead().getLeftNeck().requestMoveToPercentage(0);
     TimeUnit.SECONDS.sleep(3);
   }
 }

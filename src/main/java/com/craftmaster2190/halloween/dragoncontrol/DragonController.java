@@ -1,6 +1,6 @@
 package com.craftmaster2190.halloween.dragoncontrol;
 
-import java.util.Objects;
+import java.util.*;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.*;
 
@@ -9,6 +9,8 @@ import org.springframework.web.bind.annotation.*;
 @RequiredArgsConstructor
 public class DragonController {
   private final Dragon dragon;
+  private final PinController pinController;
+  private final BehaviorManager behaviorManager;
 
 //  @PreDestroy
   @PostMapping("reset")
@@ -22,8 +24,11 @@ public class DragonController {
   }
 
   @GetMapping
-  public Dragon getDragon() {
-    return dragon;
+  public Map<String, ?> getDragon() {
+    return Map.of("dragon", dragon,
+        "behavior", behaviorManager.getCurrentBehavior().getClass().getSimpleName(),
+        "pins", pinController.getCurrentPins()
+        );
   }
 
   @PostMapping("admin-move")

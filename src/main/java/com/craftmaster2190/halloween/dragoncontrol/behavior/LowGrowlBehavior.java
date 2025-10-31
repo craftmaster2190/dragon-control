@@ -7,21 +7,21 @@ import org.springframework.core.io.Resource;
 import org.springframework.stereotype.Component;
 
 @Component
-public class RandomHeadLowGrowlBehavior implements Behavior {
+public class LowGrowlBehavior implements Behavior {
   private final Dragon dragon;
   private final SoundPlayer soundPlayer;
 
-  public RandomHeadLowGrowlBehavior(Dragon dragon, @Value("classpath:growl8-5s.wav") Resource soundfile) {
+  public LowGrowlBehavior(Dragon dragon, @Value("classpath:growl8-5s.wav") Resource soundfile) {
     this.dragon = dragon;
     this.soundPlayer = new SoundPlayer(soundfile);
   }
 
   @Override
   public void perform() throws InterruptedException {
-    dragon.getLongNeck().setBoth(ThreadLocalRandom.current().nextDouble());
-    dragon.getHead().getRightNeck().requestMoveToPercentage(ThreadLocalRandom.current().nextDouble());
-    dragon.getHead().getLeftNeck().requestMoveToPercentage(ThreadLocalRandom.current().nextDouble());
-    dragon.getHead().getJaw().requestMoveToPercentage(ThreadLocalRandom.current().nextDouble());
+    dragon.getLongNeck().setBoth(0.5);
+    dragon.getHead().getRightNeck().requestMoveToPercentage(0.5);
+    dragon.getHead().getLeftNeck().requestMoveToPercentage(0.5);
+    dragon.getHead().getJaw().requestMoveToPercentage(0.5);
 
     soundPlayer.play();
     TimeUnit.SECONDS.sleep(5);

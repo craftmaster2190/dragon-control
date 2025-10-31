@@ -18,13 +18,11 @@ public class LookLeftLowGrowlBehavior implements Behavior {
 
   @Override
   public void perform() throws InterruptedException {
-    dragon.getLongNeck().setBoth(1.0);
+    dragon.getLongNeck().setBoth(0.5);
     dragon.getHead().getRightNeck().requestMoveToPercentage(0.0);
     dragon.getHead().getLeftNeck().requestMoveToPercentage(1.0);
-    dragon.getHead().getJaw().requestMoveToZero();
-    TimeUnit.SECONDS.sleep(4);
 
-    dragon.getHead().getJaw().requestMoveToPercentage(ThreadLocalRandom.current().nextDouble(0.5));
+    dragon.getHead().getJaw().requestMoveToPercentage(1);
     soundPlayer.play();
     TimeUnit.SECONDS.sleep(2);
     dragon.getHead().getJaw().requestMoveToZero();

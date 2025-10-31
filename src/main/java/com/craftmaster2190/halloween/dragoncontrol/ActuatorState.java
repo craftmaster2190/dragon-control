@@ -15,10 +15,10 @@ public class ActuatorState {
 
   public static final WhenStateAdjustment OPENS_FASTER = new WhenStateAdjustment(
       State.OPENING_NEGATIVE,
-      0.1);
+      0.8);
   public static final WhenStateAdjustment CLOSES_FASTER = new WhenStateAdjustment(
       State.OPENING_POSITIVE,
-      0.1);
+      0.9);
   @JsonProperty
   private final String name;
   @JsonProperty
@@ -83,23 +83,33 @@ public class ActuatorState {
     State newState = determineNewState();
 
     // The actual step may vary from the 100ms we requested, so calculate the actual time passed
-    var actualStepValue = lastUpdate == null ? Duration.ZERO : Duration.between(lastUpdate, Instant.now());
+    var actualStepDuration = lastUpdate == null ? Duration.ZERO : Duration.between(lastUpdate, Instant.now());
     lastUpdate = Instant.now();
     log.debug("{}: Step called, actual step value: {}, current state: {}, new state: {}, target: {}, current: {}",
-        name, actualStepValue, state, newState, targetPositiveElapsed.get(), currentPositiveElapsed);
+        name, actualStepDuration, state, newState, targetPositiveElapsed.get(), currentPositiveElapsed);
 
-    actualStepValue = whenStateAdjustment.adjust(newState, actualStepValue);
+    var previousStepValue = actualStepDuration;
+    actualStepDuration = whenStateAdjustment.adjust(newState, actualStepDuration);
+    log.debug("previousStepValue={}, adjusted actualStepDuration={}", previousStepValue, actualStepDuration);
+
+    var distanceFromTargetAbs = targetPositiveElapsed.get().minus(currentPositiveElapsed).abs();
+    log.debug("{}: distanceFromTarget={} actualStepDuration={}", name, distanceFromTargetAbs, actualStepDuration);
+    if (distanceFromTargetAbs.compareTo(actualStepDuration) < 0) {
+      log.info("{}: We should be close enough to just stop.", name, actualStepDuration);
+      actualStepDuration = distanceFromTargetAbs;
+    }
+
 
     // Handle update of current position
     if (newState == State.OPENING_POSITIVE) {
-      currentPositiveElapsed = currentPositiveElapsed.plus(actualStepValue);
+      currentPositiveElapsed = currentPositiveElapsed.plus(actualStepDuration);
       if (currentPositiveElapsed.compareTo(max) > 0) {
         currentPositiveElapsed = max;
         newState = State.STOPPED;
       }
     }
     else if (newState == State.OPENING_NEGATIVE) {
-      currentPositiveElapsed = currentPositiveElapsed.minus(actualStepValue);
+      currentPositiveElapsed = currentPositiveElapsed.minus(actualStepDuration);
       if (currentPositiveElapsed.compareTo(Duration.ZERO) < 0) {
         log.debug("{}: Current position ({}) went below zero, clamping to zero", name, currentPositiveElapsed);
         currentPositiveElapsed = Duration.ZERO;
@@ -148,6 +158,7 @@ public class ActuatorState {
 
   public void requestMoveTo(Duration target) {
     target = DurationUtils.clampDuration(target, Duration.ZERO, max);
+    log.info("{}: Moving to target={} current={}", name, target, currentPositiveElapsed);
     targetPositiveElapsed.set(target);
     thread.start();
   }
@@ -168,8 +179,7 @@ public class ActuatorState {
   }
 
   public void stop() {
-    targetPositiveElapsed.set(currentPositiveElapsed);
-    thread.start();
+    requestMoveTo(currentPositiveElapsed);
   }
 
   public enum State {

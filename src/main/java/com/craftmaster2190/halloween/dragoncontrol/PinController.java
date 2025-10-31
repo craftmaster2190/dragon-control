@@ -1,9 +1,8 @@
 package com.craftmaster2190.halloween.dragoncontrol;
 
 import com.pi4j.Pi4J;
-import com.pi4j.boardinfo.util.BoardInfoHelper;
 import com.pi4j.context.Context;
-import com.pi4j.io.gpio.digital.DigitalOutput;
+import com.pi4j.io.gpio.digital.*;
 import jakarta.annotation.*;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
@@ -16,13 +15,14 @@ import org.springframework.stereotype.Component;
 @Component
 public class PinController {
 
-  private static final boolean IS_RASPBERRY_PI = BoardInfoHelper.runningOnRaspberryPi();
   private final AtomicReference<Context> pi4j = new AtomicReference<>();
   private final Map<NamedGpioPin, DigitalOutput> pinMapping = new ConcurrentHashMap<>();
 
+
+
   @PostConstruct
   public void init() {
-    if (!IS_RASPBERRY_PI) {
+    if (!PiUtils.IS_RASPBERRY_PI) {
       log.warn("Not running on Raspberry Pi. GPIO pins will NOT be controlled.");
       return;
     }
@@ -46,7 +46,7 @@ public class PinController {
 
   public void openPin(NamedGpioPin pin) {
     log.debug("{} opened", pin);
-    if (!IS_RASPBERRY_PI) {
+    if (!PiUtils.IS_RASPBERRY_PI) {
       return;
     }
     getDigitalOutput(pin).high();
@@ -54,7 +54,7 @@ public class PinController {
 
   public void closePin(NamedGpioPin pin) {
     log.debug("{} closed", pin);
-    if (!IS_RASPBERRY_PI) {
+    if (!PiUtils.IS_RASPBERRY_PI) {
       return;
     }
     getDigitalOutput(pin).low();
@@ -66,5 +66,11 @@ public class PinController {
             .get()
             .digitalOutput()
             .create(pin.getRelaySwitch().getPin().getBcmNumber()));
+  }
+
+  public Map<NamedGpioPin, DigitalState> getCurrentPins() {
+    Map<NamedGpioPin, DigitalState> currentPinStates = new EnumMap<>(NamedGpioPin.class);
+    pinMapping.forEach((pin, output) -> currentPinStates.put(pin, output.state()));
+    return currentPinStates;
   }
 }

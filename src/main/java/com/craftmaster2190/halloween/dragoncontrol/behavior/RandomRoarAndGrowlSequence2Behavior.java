@@ -18,9 +18,9 @@ public class RandomRoarAndGrowlSequence2Behavior implements Behavior {
 
   @Override
   public void perform() throws InterruptedException {
-    dragon.getLongNeck().setBoth(ThreadLocalRandom.current().nextDouble());
-    dragon.getHead().getRightNeck().requestMoveToPercentage(ThreadLocalRandom.current().nextDouble());
-    dragon.getHead().getLeftNeck().requestMoveToPercentage(ThreadLocalRandom.current().nextDouble());
+    dragon.getLongNeck().setBoth(0.5);
+    dragon.getHead().getRightNeck().requestMoveToPercentage(1);
+    dragon.getHead().getLeftNeck().requestMoveToPercentage(0);
     dragon.getHead().getJaw().requestMoveToZero();
 
     soundPlayer.play();
@@ -34,10 +34,8 @@ public class RandomRoarAndGrowlSequence2Behavior implements Behavior {
     TimeUnit.SECONDS.sleep(2);
     dragon.getHead().getJaw().requestMoveToZero();
     TimeUnit.SECONDS.sleep(1);
-
-    dragon.getLongNeck().setBoth(ThreadLocalRandom.current().nextDouble());
-    dragon.getHead().getRightNeck().requestMoveToPercentage(ThreadLocalRandom.current().nextDouble());
-    dragon.getHead().getLeftNeck().requestMoveToPercentage(ThreadLocalRandom.current().nextDouble());
+    dragon.getHead().getRightNeck().requestMoveToPercentage(0);
+    dragon.getHead().getLeftNeck().requestMoveToPercentage(1);
 
     dragon.getHead().getJaw().requestMoveToPercentage(0.3);
     TimeUnit.SECONDS.sleep(2);

@@ -1,29 +1,14 @@
 package com.craftmaster2190.halloween.dragoncontrol;
 
+import jakarta.annotation.Nonnull;
 import java.io.*;
-import javax.sound.sampled.*;
-import lombok.*;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.core.io.Resource;
 
 @Slf4j
-public class SoundPlayer implements Closeable {
-  @Getter
+public class SoundPlayer {
+  @Nonnull
   private final Resource soundFile;
-  private final LineListener lineListener = event -> {
-    log.debug("SoundPlayer {} has {}", getSoundFile(), event.getType());
-    if (LineEvent.Type.START == event.getType()) {
-      playbackCompleted = false;
-    } else if (LineEvent.Type.STOP == event.getType()) {
-      playbackCompleted = true;
-    }
-  };
-
-  @Getter
-  private volatile boolean playbackCompleted = true;
-  private InputStream soundFileInputStream;
-  private AudioInputStream audioStream;
-  private Clip audioClip;
 
   public SoundPlayer(Resource soundFile) {
     this.soundFile = soundFile;
@@ -31,38 +16,53 @@ public class SoundPlayer implements Closeable {
   }
 
   public void play() {
-    if (!playbackCompleted) {
-      log.warn("Attempted to start playback while another playback is active. soundFile={}", soundFile);
+    if (!PiUtils.IS_RASPBERRY_PI) {
       return;
     }
-    try {
-      close(); // if open from previous play
-      soundFileInputStream = soundFile.getInputStream();
-      audioStream = AudioSystem.getAudioInputStream(soundFileInputStream);
-      audioClip = AudioSystem.getClip();
-      audioClip.addLineListener(lineListener);
-      audioClip.open(audioStream);
-      audioClip.start();
-    } catch (Exception e) {
-      log.error("Error playing sound file: {}", soundFile, e);
-    }
-  }
 
-  public void stop() {
-    if (audioClip != null) {
-      audioClip.stop();
-      audioClip.removeLineListener(lineListener);
-      audioClip.close();
+    File file = new File(soundFile.getFilename());
+    if (!file.exists()) {
+      try (FileOutputStream fileOutputStream = new FileOutputStream(file);
+           InputStream resourceInputStream = soundFile.getInputStream();) {
+        resourceInputStream.transferTo(fileOutputStream);
+        log.info("Created sound file={}", file);
+      }
+      catch (Exception e) {
+        log.error("Unable to create file={}", file, e);
+        return;
+      }
     }
-  }
 
-  @Override
-  public void close() throws IOException {
-    // try-with-resources to auto-close all streams, gracefully handles nulls
-    try (InputStream soundFileInputStream = this.soundFileInputStream;
-         AudioInputStream audioStream = this.audioStream;
-         Clip audioClip = this.audioClip) {
-      stop();
-    }
+    Thread
+        .ofVirtual()
+        .name("SoundPlayer-aplay-" + file.getName())
+        .start(() -> {
+          try {
+            ProcessBuilder soundPlayerProcess = new ProcessBuilder("aplay", "--device=pulse", file.getCanonicalPath());
+            soundPlayerProcess.environment().put("XDG_RUNTIME_DIR", "/run/user/1000");
+            Process process = soundPlayerProcess.start();
+
+            // It's crucial to read the process's output streams (stdout and stderr)
+            // to prevent the child process from blocking or hanging.
+
+            BufferedReader reader = new BufferedReader(new InputStreamReader(process.getInputStream()));
+            String line;
+            while ((line = reader.readLine()) != null) {
+              log.info("aplay {} stdout: {}", file, line);
+            }
+
+            BufferedReader errorReader = new BufferedReader(new InputStreamReader(process.getErrorStream()));
+            while ((line = errorReader.readLine()) != null) {
+              log.error("aplay {} stderr: {}", file, line);
+            }
+
+            int exitCode = process.waitFor();
+            log.info("aplay {} exit-code: {}", file, exitCode);
+          }
+          catch (Exception e) {
+            log.error("Error playing file={}", file, e);
+          }
+
+        });
   }
 }
