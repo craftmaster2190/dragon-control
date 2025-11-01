@@ -18,7 +18,7 @@ public class LookLeftLowGrowlBehavior implements Behavior {
 
   @Override
   public void perform() throws InterruptedException {
-    dragon.getLongNeck().setBoth(0.5);
+    dragon.getLongNeck().setBoth(1);
     dragon.getHead().getRightNeck().requestMoveToPercentage(0.0);
     dragon.getHead().getLeftNeck().requestMoveToPercentage(1.0);
 

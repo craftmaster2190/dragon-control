@@ -18,10 +18,10 @@ public class DragonHead {
 
   public DragonHead(PinController pinController) {
     leftNeck = new ActuatorState("UpperLeftNeck",
-        Duration.ofSeconds(20), CLOSES_FASTER,
+        Duration.ofSeconds(10), CLOSES_FASTER,
         new Chicago3WaySwitch(pinController, UPPER_LEFT_NECK_POSITIVE, UPPER_LEFT_NECK_NEGATIVE));
     rightNeck = new ActuatorState("UpperRightNeck",
-        Duration.ofSeconds(20), CLOSES_FASTER,
+        Duration.ofSeconds(10), CLOSES_FASTER,
         new Chicago3WaySwitch(pinController, UPPER_RIGHT_NECK_POSITIVE, UPPER_RIGHT_NECK_NEGATIVE));
     jaw = new ActuatorState("Jaw",
         Duration.ofSeconds(6), OPENS_FASTER,

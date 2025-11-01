@@ -19,6 +19,14 @@ reboot-pi:
 	ssh dragon 'sudo reboot'
 
 connect-jbl:
+	ssh dragon 'bluetoothctl agent off'
+	sleep 2
+	ssh dragon 'bluetoothctl power off'
+	sleep 2
+	ssh dragon 'bluetoothctl power on'
+	sleep 2
+	ssh dragon 'bluetoothctl agent on'
+	sleep 2
 	ssh dragon 'bluetoothctl connect 68:52:10:2F:9C:1A'
 
 browser:
